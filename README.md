@@ -1,117 +1,98 @@
-# Welcome to PearlThoughts Internship Program
+# Pull Request (Strapi-specific)
 
-We are thrilled to welcome you to the PearlThoughts team! This internship is designed to provide you with valuable hands-on experience, deepen your understanding of technology, and help you hone your skills in a collaborative, innovative environment.
+## PR Title: Strapi Implementation LocalHost
 
-# Policies and Guidelines
+### 🌟 PR Information
+**Date**: [2025-12-03]  
+**Author**: Anurag Sharma  
+**Team**: Scripts-Smith  
+**Ticket/Task**: Task 1
 
-## Training and Attendance
+---
 
-### Training Sessions
-- **Schedule**: Every weekday at 10:30 AM 
-- **Attendance**: MANDATORY - Missing sessions affects your evaluation
-- **Duration**: Full attention required during training hours
+## 📝 Description
 
-### Working Hours
-- **Availability**: 10 AM to 6 PM on all working days
-- **Active Participation**: Required in all team activities and discussions
+### What does this PR do?
+- Adds/updates Strapi functionality related to [content-type / auth / custom controller / route / middleware].  
+- Implements server-side validations and a small test suite for the changed endpoints.
 
-## Daily Requirements
+### Why is this change necessary?
+- To support [feature/bugfix], enforce data integrity, and provide consistent API responses for the frontend.
 
-### 📝 Pull Requests (PR)
-- **Deadline**: Must be raised by end of each day
-- **Content**: Include all work completed during the day
-- **Consequence**: No PR = Marked absent for that day
+---
 
-### 📋 Status Updates
-- Post daily progress in your team channel
-- Use the [[../Templates/Daily-Status-Template|Daily Status Template]]
-- Be specific about completed tasks and blockers
+## 🔄 Type of Change
+- [ ] 🐛 Bug fix
+- [x] ✨ New feature / improvement (select as appropriate)
+- [ ] 📝 Documentation update
+- [ ] 🔧 Code refactoring
+- [ ] ✅ Test update
 
-## Task Management
+---
 
-### Assigned Tasks
-- Tasks assigned during morning training sessions
-- **Timely Completion**: Critical for your evaluation
-- Document challenges and solutions
-
-### Task Tracking
-- Update task status regularly
-- Communicate blockers immediately
-- Seek help when needed
-
-## Evaluation Process
-
-### Weekly Evaluations
-- **When**: Every Friday
-- **Criteria**:
-  - Task completion and quality
-  - Collaboration and teamwork
-  - Learning progress
-  - Professional conduct
-
-### Performance Metrics
-- Code quality and best practices
-- Meeting deadlines
-- Communication effectiveness
-- Problem-solving approach
-
-## Communication Channels
-
-### MS Teams Channels
-
-| Channel | Purpose |
-|---------|------|
-| **Internship** | Key updates and announcements |
-| **Support** | Cloud resources and technical guidance |
-| **DevOps** | Deployment assistance and DevOps queries |
-| **Team [Name]** | Your team's collaboration space |
-
-### Email Communication
-- **Support Queries**: hr@pearlthoughts.com
-- **Topics**: LOA requests, Teams access, evaluation results
-- **Important**: Avoid raising these in training sessions or Teams channels
-
-## Termination Policy
-
-### ⚠️ Automatic Termination Triggers
-- Missing 3 consecutive training sessions
-- Failing to submit PR for 3 consecutive days
-- No prior notice will be given
-
-## Professional Conduct
-
-### Expected Behavior
-1. **Professionalism**: Maintain professional demeanor in all interactions
-2. **Respect**: Treat all team members with respect
-3. **Punctuality**: Be on time for all meetings and deadlines
-4. **Integrity**: Be honest about your progress and challenges
-5. **Collaboration**: Actively help and learn from peers
-
-## Support Resources
-
-### Getting Help
-- Technical issues: Post in Support channel
-- DevOps help: Use DevOps channel
-- Administrative queries: Email hr@pearlthoughts.com
-- Task clarification: Ask your mentor during training
-
-## Best Practices
+## 📋 Checklist
 
 ### Code Quality
-- Follow project coding standards
-- Write clean, documented code
-- Test your changes before PR
-- Review peers' code constructively
+- [x] Code follows project style guidelines
+- [x] Self-review performed
+- [x] No debug console.log left
+
+### Testing
+- [x] Local manual testing completed
+- [x] Unit/integration tests added for affected endpoints
 
 ### Documentation
-- Document your learning journey
-- Share helpful resources with team
-- Maintain clear commit messages
-- Update project documentation
+- [x] README or API docs updated (if applicable)
 
-## Your Journey Starts Here
+---
 
-We are excited to have you on board and look forward to seeing you grow and succeed during your time with us. 
+## 🧪 Implementation Details
 
-**Welcome to PearlThoughts—let's embark on this journey together!**
-# The-Config-Crew
+### Files Changed (example — replace with actual files)
+- strapi/src/api/post/controllers/post.js
+- strapi/src/api/post/services/post.js
+- strapi/config/plugins.js
+- strapi/tests/post.test.js
+
+### Key Changes
+1. Add Post content-type with custom controller
+   - File: src/api/post/controllers/post.js
+   - Reason: Support new public blog-post endpoint with custom filtering and sanitization.
+
+2. Add service for complex DB operations
+   - File: src/api/post/services/post.js
+   - Reason: Centralize business logic and make controller thin for easier testing.
+
+3. Update auth/plugin config
+   - File: config/plugins.js
+   - Reason: Allow public read access for posts while protecting write routes.
+
+4. Add tests
+   - File: tests/post.test.js
+   - Reason: Verify API contract and core behaviors (create/read/list).
+
+---
+
+## 🧪 Testing Instructions
+
+### How to test locally (Windows)
+1. Open integrated terminal in project root: PowerShell or CMD.
+2. Install / build:
+   - npm install
+3. Start Strapi in development:
+   - npm run develop
+4. Run tests:
+   - npx jest tests/post.test.js
+
+### Quick API tests (curl)
+- List posts (public):
+```bash
+curl -s http://localhost:1337/api/posts | jq
+```
+Create post (requires auth — replace <TOKEN>):
+```
+curl -X POST http://localhost:1337/api/posts \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"data":{"title":"Test","content":"Body"}}'
+```
