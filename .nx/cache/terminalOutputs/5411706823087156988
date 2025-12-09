@@ -1,0 +1,17 @@
+[36m
+[1m./server/src/index.ts[22m → [1m./dist/server, ./dist/server[22m...[39m
+[32mcreated [1m./dist/server, ./dist/server[22m in [1m6.1s[22m[39m
+[36m
+[1m./admin/src/index.ts[22m → [1m./dist/admin, ./dist/admin[22m...[39m
+[1m[33m(!) Circular dependencies[39m[22m
+admin/src/components/AIChat/FeedbackModal.tsx -> admin/src/components/AIChat/hooks/useFeedback.ts -> admin/src/components/AIChat/providers/ChatProvider.tsx -> admin/src/components/AIChat/FeedbackModal.tsx
+admin/src/components/AIChat/providers/ChatProvider.tsx -> admin/src/components/AIChat/UploadCodeModal.tsx -> admin/src/components/AIChat/hooks/useAttachments.ts -> admin/src/components/AIChat/providers/ChatProvider.tsx
+admin/src/components/AIChat/providers/ChatProvider.tsx -> admin/src/components/AIChat/UploadCodeModal.tsx -> admin/src/components/AIChat/hooks/useCodeUpload.ts -> admin/src/components/AIChat/providers/ChatProvider.tsx
+...and 4 more
+[1m[33m(!) Mixing named and default exports[39m[22m
+[90mhttps://rollupjs.org/configuration-options/#output-exports[39m
+[1mThe following entry modules are using named and default exports together:[22m
+admin/src/index.ts
+
+Consumers of your bundle will have to use chunk.default to access their default export, which may not be what you want. Use `output.exports: "named"` to disable this warning.
+[32mcreated [1m./dist/admin, ./dist/admin[22m in [1m23.7s[22m[39m

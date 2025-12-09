@@ -1,0 +1,30 @@
+# Production Dockerfile for Strapi
+# Run this build from the root of the monorepo:
+# docker build -f examples/getstarted/Dockerfile.prod -t my-strapi-app .
+
+FROM node:20-alpine
+
+# Install dependencies required for building native modules
+RUN apk add --no-cache python3 make g++ tini
+
+WORKDIR /opt/strapi
+
+# Copy the entire monorepo to ensure workspace dependencies are available
+COPY . .
+
+# Install dependencies for the monorepo
+RUN yarn install --frozen-lockfile
+
+# Build the specific example application
+WORKDIR /opt/strapi/examples/getstarted
+ENV NODE_ENV=production
+RUN yarn build
+
+# Expose the application port
+EXPOSE 1337
+
+# Use tini as the entrypoint for proper signal handling
+ENTRYPOINT ["/sbin/tini", "--"]
+
+# Start the application
+CMD ["yarn", "start"]

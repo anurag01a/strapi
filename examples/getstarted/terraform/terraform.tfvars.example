@@ -1,0 +1,11 @@
+# AWS Region (default is ap-south-1)
+aws_region = "ap-south-1"
+
+# EC2 Instance Type (t3.small is good for testing, t3.medium for production)
+instance_type = "t3.small"
+
+# Name of your existing SSH Key Pair in AWS
+key_name = "your-key-pair-name"
+
+# Your Docker Hub image (run build_and_push.ps1 to create this)
+docker_image = "your-username/strapi-app:latest"

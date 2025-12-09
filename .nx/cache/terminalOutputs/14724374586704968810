@@ -1,0 +1,20 @@
+[36m
+[1m./server/src/index.ts[22m → [1m./dist/server, ./dist/server[22m...[39m
+[32mcreated [1m./dist/server, ./dist/server[22m in [1m8.6s[22m[39m
+[36m
+[1m./admin/src/index.ts[22m → [1m./dist/admin, ./dist/admin[22m...[39m
+[1m[33m(!) Circular dependencies[39m[22m
+admin/src/hooks/useDocument.ts -> admin/src/hooks/useDocumentLayout.ts -> admin/src/hooks/useDocument.ts
+admin/src/hooks/useDocumentActions.ts -> admin/src/pages/EditView/components/FormInputs/Relations/RelationModal.tsx -> admin/src/exports.ts -> admin/src/hooks/useDocumentActions.ts
+admin/src/pages/EditView/components/DocumentActions.tsx -> admin/src/hooks/useDocumentActions.ts -> admin/src/pages/EditView/components/FormInputs/Relations/RelationModal.tsx -> admin/src/pages/EditView/components/DocumentActions.tsx
+...and 27 more
+[1m[33m(!) Mixing named and default exports[39m[22m
+[90mhttps://rollupjs.org/configuration-options/#output-exports[39m
+[1mThe following entry modules are using named and default exports together:[22m
+admin/src/index.ts
+
+Consumers of your bundle will have to use chunk.default to access their default export, which may not be what you want. Use `output.exports: "named"` to disable this warning.
+[32mcreated [1m./dist/admin, ./dist/admin[22m in [1m36.7s[22m[39m
+[36m
+[1m./shared/index.ts[22m → [1m./dist/shared, ./dist/shared[22m...[39m
+[32mcreated [1m./dist/shared, ./dist/shared[22m in [1m847ms[22m[39m

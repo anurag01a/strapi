@@ -1,0 +1,6 @@
+[36m
+[1m./admin/src/index.js[22m → [1m./dist/admin, ./dist/admin[22m...[39m
+[32mcreated [1m./dist/admin, ./dist/admin[22m in [1m11.9s[22m[39m
+[36m
+[1m./server/index.js[22m → [1m./dist/server, ./dist/server[22m...[39m
+[32mcreated [1m./dist/server, ./dist/server[22m in [1m10.7s[22m[39m

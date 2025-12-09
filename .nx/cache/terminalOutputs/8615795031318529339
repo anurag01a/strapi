@@ -1,0 +1,6 @@
+[36m
+[1m./src/index.ts[22m → [1m./dist, ./dist[22m...[39m
+[1m[33m(!) Circular dependencies[39m[22m
+src/core-api/routes/validation/mappers.ts -> src/core-api/routes/validation/attributes.ts -> src/core-api/routes/validation/component.ts -> src/core-api/routes/validation/mappers.ts
+src/core-api/routes/validation/content-type.ts -> src/core-api/routes/validation/mappers.ts -> src/core-api/routes/validation/attributes.ts -> src/core-api/routes/validation/content-type.ts
+[32mcreated [1m./dist, ./dist[22m in [1m21.6s[22m[39m
