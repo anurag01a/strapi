@@ -5,9 +5,9 @@ variable "aws_region" {
 }
 
 variable "instance_type" {
-  description = "EC2 instance type. t3.small is a cost-effective choice for testing."
+  description = "EC2 instance type. t3.micro is free-tier eligible (if applicable) and sufficient for testing."
   type        = string
-  default     = "t3.small"
+  default     = "t3.micro"
 }
 
 variable "key_name" {
