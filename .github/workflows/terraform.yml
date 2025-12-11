@@ -1,0 +1,68 @@
+name: Streamline CD - Deploy to EC2
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker content digest or specific tag (e.g. sha-8921...) to deploy'
+        required: true
+        default: 'latest'
+      action:
+        description: 'Terraform Action to perform'
+        required: true
+        default: 'apply'
+        type: choice
+        options:
+          - apply
+          - destroy
+          - plan
+
+env:
+  AWS_REGION: ap-south-1
+  TF_WORKING_DIR: examples/getstarted/terraform
+
+jobs:
+  terraform-deploy:
+    name: Terraform Deploy
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan
+        if: ${{ inputs.action == 'plan' }}
+        run: |
+          terraform plan \
+            -var="docker_image=${{ secrets.DOCKER_USERNAME }}/strapi-app:${{ inputs.image_tag }}" \
+            -var="key_name=${{ secrets.AWS_SSH_KEY_NAME }}"
+
+      - name: Terraform Apply
+        if: ${{ inputs.action == 'apply' }}
+        run: |
+          terraform apply -auto-approve \
+            -var="docker_image=${{ secrets.DOCKER_USERNAME }}/strapi-app:${{ inputs.image_tag }}" \
+            -var="key_name=${{ secrets.AWS_SSH_KEY_NAME }}"
+
+      - name: Terraform Destroy
+        if: ${{ inputs.action == 'destroy' }}
+        run: |
+          terraform destroy -auto-approve \
+            -var="docker_image=${{ secrets.DOCKER_USERNAME }}/strapi-app:${{ inputs.image_tag }}" \
+            -var="key_name=${{ secrets.AWS_SSH_KEY_NAME }}"

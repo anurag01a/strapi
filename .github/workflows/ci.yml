@@ -1,0 +1,53 @@
+name: Streamline CI - Build and Push Strapi
+
+on:
+  push:
+    branches: ['main', 'working_anurag', 'working_anurag_2']
+  workflow_dispatch:
+
+env:
+  DOCKER_REPO: ${{ secrets.DOCKER_USERNAME }}/strapi-app
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REPO }}
+          tags: |
+            type=sha,format=long
+            type=raw,value=latest
+
+      # Build the context from the root, but use the Strapi Dockerfile if needed.
+      # Assuming the user wants to build the 'strapi/examples/getstarted' app based on verified Dockerfile
+      # Or just the root if that's where the app is.
+      # Adjusting 'context' and 'file' based on the verified file location: strapi/Dockerfile
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Output Image Tag
+        run: echo "Image generated with tag sha-${{ github.sha }}"
