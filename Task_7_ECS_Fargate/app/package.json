@@ -1,0 +1,12 @@
+{
+  "name": "strapi-app-mock",
+  "version": "1.0.0",
+  "description": "Mock Strapi App for Infrastructure Testing",
+  "scripts": {
+    "build": "echo 'Building Strapi...'",
+    "start": "echo 'Starting Strapi...'"
+  },
+  "dependencies": {
+    "strapi": "^4.0.0"
+  }
+}
