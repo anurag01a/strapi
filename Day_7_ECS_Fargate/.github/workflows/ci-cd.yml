@@ -1,0 +1,99 @@
+name: Deploy to ECS (Zero Cost / LocalStack)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      localstack:
+        image: localstack/localstack:latest
+        ports:
+          - 4566:4566
+        env:
+          SERVICES: ecs,ecr,ec2,iam,sts,cloudwatch,logs
+          DEFAULT_REGION: us-east-1
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          DOCKER_HOST: unix:///var/run/docker.sock
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+      with:
+        driver-opts: network=host
+
+    - name: Install AWS CLI
+      run: |
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        sudo ./aws/install
+
+    - name: Configure AWS Credentials (Mock)
+      run: |
+        aws configure set aws_access_key_id test
+        aws configure set aws_secret_access_key test
+        aws configure set region us-east-1
+        aws configure set output json
+
+    - name: Wait for LocalStack
+      run: |
+        echo "Waiting for LocalStack..."
+        until curl -s http://localhost:4566/_localstack/health | grep '"available": true'; do
+          sleep 5
+        done
+        echo "LocalStack is ready."
+
+    - name: Create ECR Repository (LocalStack)
+      run: |
+        aws --endpoint-url=http://localhost:4566 ecr create-repository --repository-name strapi-app || true
+
+    - name: Build and Push Docker Image
+      run: |
+        # Tag for LocalStack ECR
+        docker build -t localhost:4566/strapi-app:latest ./Day_7_ECS_Fargate/app
+        
+        # In GitHub Actions Service Containers, accessing localhost:4566 from the host works.
+        # But pushing to ECR in LocalStack often requires just pushing to the registry.
+        # LocalStack 2.0+ uses localhost:4566 for ECR.
+        
+        docker tag localhost:4566/strapi-app:latest localhost:4566/strapi-app:latest
+        docker push localhost:4566/strapi-app:latest
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.5.0
+
+    - name: Terraform Init
+      working-directory: ./Day_7_ECS_Fargate/terraform
+      run: terraform init
+
+    - name: Terraform Plan
+      working-directory: ./Day_7_ECS_Fargate/terraform
+      run: terraform plan -var="use_localstack=true"
+
+    - name: Terraform Apply (Zero Cost Verification)
+      working-directory: ./Day_7_ECS_Fargate/terraform
+      run: terraform apply -auto-approve -var="use_localstack=true"
+
+    - name: Verify Resources
+      run: |
+        echo "Verifying ECS Cluster..."
+        aws --endpoint-url=http://localhost:4566 ecs list-clusters
+        
+        echo "Verifying CloudWatch Log Group..."
+        aws --endpoint-url=http://localhost:4566 logs describe-log-groups --log-group-name-prefix /ecs/strapi
+        
+        echo "Verifying Metric Alarms..."
+        aws --endpoint-url=http://localhost:4566 cloudwatch describe-alarms --alarm-names strapi-high-cpu strapi-high-memory
+        
+        echo "Verifying Dashboard..."
+        aws --endpoint-url=http://localhost:4566 cloudwatch list-dashboards
