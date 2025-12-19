@@ -1,0 +1,58 @@
+
+name: Verify LocalStack
+
+on:
+  push:
+    paths:
+      - 'ECS_Fargate/terraform/**'
+      - '.github/workflows/verify-localstack.yml'
+  pull_request:
+    paths:
+      - 'ECS_Fargate/terraform/**'
+
+env:
+  TF_WORKING_DIR: ECS_Fargate/terraform
+  AWS_ACCESS_KEY_ID: test
+  AWS_SECRET_ACCESS_KEY: test
+  AWS_REGION: us-east-1
+
+jobs:
+  verify:
+    name: Verify Terraform with LocalStack
+    runs-on: ubuntu-latest
+    
+    services:
+      localstack:
+        image: localstack/localstack:3.0.0
+        ports:
+          - 4566:4566
+        env:
+          SERVICES: ecs,ec2,iam,sts,cloudwatch,logs,rds,elbv2
+          DEFAULT_REGION: us-east-1
+          DEBUG: 1
+          
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform validate
+
+      - name: Terraform Plan (LocalStack)
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform plan \
+            -var="use_localstack=true" \
+            -var="aws_access_key=test" \
+            -var="aws_secret_key=test" \
+            -var="db_password=password" \
+            -var="db_username=user" \
+            -var="db_name=strapi"

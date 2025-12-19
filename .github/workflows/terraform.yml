@@ -19,7 +19,7 @@ on:
 
 env:
   AWS_REGION: ap-south-1 # Match your variables.tf default
-  TF_WORKING_DIR: examples/getstarted/terraform
+  TF_WORKING_DIR: ECS_Fargate/terraform
 
 jobs:
   terraform-deploy:

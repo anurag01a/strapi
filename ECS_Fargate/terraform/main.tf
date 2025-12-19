@@ -1,3 +1,4 @@
+
 provider "aws" {
   region = var.aws_region
 
@@ -16,6 +17,7 @@ provider "aws" {
     route53         = var.use_localstack ? "http://localhost:4566" : null
     sts             = var.use_localstack ? "http://localhost:4566" : null
     elasticloadbalancing = var.use_localstack ? "http://localhost:4566" : null
+    rds             = var.use_localstack ? "http://localhost:4566" : null
   }
 }
 
@@ -27,28 +29,4 @@ terraform {
       version = "~> 5.0"
     }
   }
-}
-
-variable "aws_region" {
-  description = "AWS Region"
-  type        = string
-  default     = "us-east-1"
-}
-
-variable "aws_access_key" {
-  description = "AWS Access Key"
-  type        = string
-  default     = null
-}
-
-variable "aws_secret_key" {
-  description = "AWS Secret Key"
-  type        = string
-  default     = null
-}
-
-variable "use_localstack" {
-  description = "Switch to enable LocalStack (Mock AWS)"
-  type        = bool
-  default     = false
 }
