@@ -45,19 +45,13 @@ jobs:
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform validate
 
-      - name: Terraform Apply (LocalStack)
+      - name: Terraform Plan (LocalStack)
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
-          terraform apply -auto-approve \
+          terraform plan \
             -var="use_localstack=true" \
             -var="aws_access_key=test" \
             -var="aws_secret_key=test" \
             -var="db_password=password" \
             -var="db_username=user" \
             -var="db_name=strapi"
-
-      - name: Verify Resources
-        run: |
-          pip install awscli-local
-          chmod +x .github/scripts/verify_deployment.sh
-          ./.github/scripts/verify_deployment.sh

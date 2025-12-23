@@ -17,10 +17,11 @@ provider "aws" {
     route53         = var.use_localstack ? "http://localhost:4566" : null
     sts             = var.use_localstack ? "http://localhost:4566" : null
     elasticloadbalancing = var.use_localstack ? "http://localhost:4566" : null
+    elbv2           = var.use_localstack ? "http://localhost:4566" : null
     rds             = var.use_localstack ? "http://localhost:4566" : null
     codedeploy      = var.use_localstack ? "http://localhost:4566" : null
     cloudwatch      = var.use_localstack ? "http://localhost:4566" : null
-    cloudwatchlogs  = var.use_localstack ? "http://localhost:4566" : null
+    s3              = var.use_localstack ? "http://localhost:4566" : null
   }
 }
 
