@@ -27,7 +27,7 @@ jobs:
         ports:
           - 4566:4566
         env:
-          SERVICES: ecs,ec2,iam,sts,cloudwatch,logs,rds,elbv2
+          SERVICES: ecs,ec2,iam,sts,cloudwatch,logs,rds,elbv2,codedeploy
           DEFAULT_REGION: us-east-1
           DEBUG: 1
           
@@ -46,13 +46,19 @@ jobs:
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform validate
 
-      - name: Terraform Plan (LocalStack)
+      - name: Terraform Apply (LocalStack)
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
-          terraform plan \
+          terraform apply -auto-approve \
             -var="use_localstack=true" \
             -var="aws_access_key=test" \
             -var="aws_secret_key=test" \
             -var="db_password=password" \
             -var="db_username=user" \
             -var="db_name=strapi"
+
+      - name: Verify Resources
+        run: |
+          pip install awscli-local
+          chmod +x .github/scripts/verify_deployment.sh
+          ./.github/scripts/verify_deployment.sh
