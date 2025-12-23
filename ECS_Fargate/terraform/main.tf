@@ -19,6 +19,8 @@ provider "aws" {
     elasticloadbalancing = var.use_localstack ? "http://localhost:4566" : null
     rds             = var.use_localstack ? "http://localhost:4566" : null
     codedeploy      = var.use_localstack ? "http://localhost:4566" : null
+    cloudwatch      = var.use_localstack ? "http://localhost:4566" : null
+    cloudwatchlogs  = var.use_localstack ? "http://localhost:4566" : null
   }
 }
 
