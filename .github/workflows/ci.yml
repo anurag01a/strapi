@@ -36,28 +36,16 @@ jobs:
           pip install awscli-local
 
       # 1. Provision Infrastructure (Simulated)
-      - name: Terraform Init
-        working-directory: ${{ env.TF_WORKING_DIR }}
-        run: terraform init
-
-      - name: Terraform Apply (Create Infra)
-        working-directory: ${{ env.TF_WORKING_DIR }}
+      # Note: We bypass Terraform for LocalStack to avoid Pro-feature licensing 501 errors.
+      - name: Setup LocalStack Resources
         run: |
-          terraform apply -auto-approve \
-            -var="use_localstack=true" \
-            -var="aws_access_key=test" \
-            -var="aws_secret_key=test" \
-            -var="db_password=password" \
-            -var="db_username=user" \
-            -var="db_name=strapi"
+          chmod +x .github/scripts/setup_localstack.sh
+          ./.github/scripts/setup_localstack.sh
 
-      # 2. Get ECR Repo URI
-      - name: Get ECR Repository URI
-        id: ecr
-        working-directory: ${{ env.TF_WORKING_DIR }}
+      # 2. Set ECR Repo URI (Hardcoded for LocalStack)
+      - name: Set ECR Repository URI
         run: |
-          REPO_URL=$(terraform output -raw ecr_repository_url)
-          echo "ECR_REPO=$REPO_URL" >> $GITHUB_ENV
+          echo "ECR_REPO=localhost:4566/strapi-app" >> $GITHUB_ENV
 
       # 3. Build and Push to LocalStack ECR
       - name: Build and Push Docker Image
