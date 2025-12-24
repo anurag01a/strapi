@@ -1,16 +1,28 @@
 #!/bin/bash
 set -e
 
-echo "Verifying CodeDeploy Application..."
-awslocal codedeploy get-application --application-name strapi-codedeploy-app
+DEPLOYMENT_ID=$1
+REGION=${2:-us-east-1}
+ENDPOINT_URL=${3:-http://localhost:4566}
 
-echo "Verifying CodeDeploy Deployment Group..."
-awslocal codedeploy get-deployment-group --application-name strapi-codedeploy-app --deployment-group-name strapi-deployment-group
+echo "Monitoring Deployment: $DEPLOYMENT_ID"
 
-echo "Verifying ECS Service..."
-awslocal ecs describe-services --cluster strapi-cluster --services strapi-service
+# Wait for deployment to complete (success or failure)
+# We use a loop to provide feedback, but 'aws deploy wait' is also an option.
+# LocalStack 'wait' commands can sometimes be flaky if not fully implemented, but let's try the wait command first.
 
-echo "Verifying Target Groups..."
-awslocal elbv2 describe-target-groups
+echo "Waiting for deployment to complete..."
+aws --endpoint-url="$ENDPOINT_URL" --region="$REGION" deploy wait deployment-successful --deployment-id "$DEPLOYMENT_ID"
 
-echo "SUCCESS: All Blue/Green resources verified in LocalStack!"
+# Check final status
+STATUS=$(aws --endpoint-url="$ENDPOINT_URL" --region="$REGION" deploy get-deployment --deployment-id "$DEPLOYMENT_ID" --query "deploymentInfo.status" --output text)
+
+echo "Final Deployment Status: $STATUS"
+
+if [ "$STATUS" == "Succeeded" ]; then
+  echo "Deployment Succeeded!"
+  exit 0
+else
+  echo "Deployment Failed!"
+  exit 1
+fi

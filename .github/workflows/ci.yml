@@ -1,4 +1,4 @@
-name: Streamline CI - Build and Push Strapi
+name: Streamline CI/CD - LocalStack Blue/Green
 
 on:
   push:
@@ -6,45 +6,141 @@ on:
   workflow_dispatch:
 
 env:
-  # Replace with your actual Docker Hub username or Repo URL
-  DOCKER_REPO: ${{ secrets.DOCKER_USERNAME }}/strapi-app 
+  AWS_REGION: us-east-1
+  AWS_ACCESS_KEY_ID: test
+  AWS_SECRET_ACCESS_KEY: test
+  TF_WORKING_DIR: ECS_Fargate/terraform
 
 jobs:
-  build-and-push:
+  deploy-localstack:
     runs-on: ubuntu-latest
-    
+    services:
+      localstack:
+        image: localstack/localstack:latest
+        ports:
+          - 4566:4566
+          - 4510-4559:4510-4559  # Expose extra ports if needed
+        env:
+          SERVICES: ecs,ecr,codedeploy,iam,sts,cloudwatch,logs,ec2,elbv2
+          DEFAULT_REGION: us-east-1
+          DEBUG: 1
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Install AWS CLI & LocalStack Wrapper
+        run: |
+          pip install awscli-local
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.DOCKER_REPO }}
-          tags: |
-            type=sha,format=long
-            type=raw,value=latest
+      # 1. Provision Infrastructure (Simulated)
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init
 
+      - name: Terraform Apply (Create Infra)
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform apply -auto-approve \
+            -var="use_localstack=true" \
+            -var="aws_access_key=test" \
+            -var="aws_secret_key=test" \
+            -var="db_password=password" \
+            -var="db_username=user" \
+            -var="db_name=strapi"
+
+      # 2. Get ECR Repo URI
+      - name: Get ECR Repository URI
+        id: ecr
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          REPO_URL=$(terraform output -raw ecr_repository_url)
+          echo "ECR_REPO=$REPO_URL" >> $GITHUB_ENV
+
+      # 3. Build and Push to LocalStack ECR
       - name: Build and Push Docker Image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+        run: |
+          # Create a dummy tag for LocalStack ECR (localhost:4566)
+          # Note: Docker inside runner talking to mapped port 4566
+          IMAGE_TAG="sha-${{ github.sha }}"
+          FULL_IMAGE="${{ env.ECR_REPO }}:$IMAGE_TAG"
+          
+          # Build
+          docker build -t "$FULL_IMAGE" .
+          
+          # Login (LocalStack doesn't strictly enforce auth but good practice to allow the push)
+          # We force the push to localhost:4566
+          docker push "$FULL_IMAGE"
+          
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "FULL_IMAGE=$FULL_IMAGE" >> $GITHUB_ENV
 
-      # Export the tag for use in the CD pipeline (manual trigger instructions provided in docs)
-      - name: Output Image Tag
-        run: echo "Image generated with tag sha-${{ github.sha }}"
+      # 4. Register New Task Definition
+      - name: Register New Task Definition
+        id: task-def
+        run: |
+          # Fetch current definition
+          # We need to construct the new container definition with the new image
+          
+          TASK_FAMILY="strapi-task"
+          
+          # Get the current task definition JSON
+          aws --endpoint-url=http://localhost:4566 ecs describe-task-definition --task-definition $TASK_FAMILY --query "taskDefinition" > task-def-orig.json
+          
+          # jq replacement to update image
+          # Removing keys incompatible with 'register-task-definition' (status, taskDefinitionArn, etc)
+          jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy) | .containerDefinitions[0].image = "${{ env.FULL_IMAGE }}"' task-def-orig.json > task-def-new.json
+          
+          # Register
+          NEW_TASK_ARN=$(aws --endpoint-url=http://localhost:4566 ecs register-task-definition --cli-input-json file://task-def-new.json --query "taskDefinition.taskDefinitionArn" --output text)
+          echo "NEW_TASK_ARN=$NEW_TASK_ARN" >> $GITHUB_ENV
+
+      # 5. Create Deployment (CodeDeploy)
+      - name: Trigger CodeDeploy Blue/Green
+        id: deploy
+        run: |
+          APP_NAME="strapi-codedeploy-app"
+          DEP_GROUP="strapi-deployment-group"
+          
+          # Create deployment. We need to specify the new Task Definition
+          # For ECS Blue/Green, we usually need an AppSpec file + Task Def. 
+          # Or we can pass 'revision' pointing to the AppSpec.
+          # Terraform usually expects an AppSpec. Let's create a dynamic AppSpec.
+          
+          cat <<EOF > appspec.json
+          {
+            "version": 0.0,
+            "Resources": [
+              {
+                "TargetService": {
+                  "Type": "AWS::ECS::Service",
+                  "Properties": {
+                    "TaskDefinition": "${{ env.NEW_TASK_ARN }}",
+                    "LoadBalancerInfo": {
+                      "ContainerName": "strapi-container",
+                      "ContainerPort": 1337
+                    }
+                  }
+                }
+              }
+            ]
+          }
+          EOF
+          
+          DEPLOYMENT_ID=$(aws --endpoint-url=http://localhost:4566 deploy create-deployment \
+            --application-name "$APP_NAME" \
+            --deployment-group-name "$DEP_GROUP" \
+            --revision "{\"revisionType\": \"AppSpecContent\", \"appSpecContent\": {\"content\": $(jq -Rs . appspec.json)}}" \
+            --query "deploymentId" --output text)
+            
+          echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
+
+      # 6. Monitor Deployment
+      - name: Monitor Deployment
+        run: |
+          chmod +x .github/scripts/verify_deployment.sh
+          ./.github/scripts/verify_deployment.sh "${{ env.DEPLOYMENT_ID }}" "us-east-1" "http://localhost:4566"
+

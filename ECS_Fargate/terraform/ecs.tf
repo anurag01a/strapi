@@ -104,6 +104,8 @@ resource "aws_ecs_service" "app" {
     type = "CODE_DEPLOY"
   }
 
+  wait_for_steady_state = false
+
   lifecycle {
     ignore_changes = [task_definition, load_balancer]
   }
