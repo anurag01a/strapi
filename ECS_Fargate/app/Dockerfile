@@ -3,11 +3,9 @@ FROM node:18-alpine
 WORKDIR /opt/app
 
 COPY package.json ./
-RUN npm install
+COPY index.js ./
 
-COPY . .
-
-RUN npm run build
+# No npm install needed - we use only built-in modules
 
 EXPOSE 1337
 

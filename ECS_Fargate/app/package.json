@@ -1,12 +1,10 @@
 {
-  "name": "strapi-app-mock",
+  "name": "strapi-mock",
   "version": "1.0.0",
-  "description": "Mock Strapi App for Infrastructure Testing",
+  "description": "Minimal mock app for CI verification",
+  "main": "index.js",
   "scripts": {
-    "build": "echo 'Building Strapi...'",
-    "start": "echo 'Starting Strapi...'"
-  },
-  "dependencies": {
-    "strapi": "^4.0.0"
+    "build": "echo 'Build complete'",
+    "start": "node index.js"
   }
 }
