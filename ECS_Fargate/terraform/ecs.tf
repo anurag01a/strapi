@@ -4,6 +4,7 @@ resource "aws_ecs_cluster" "main" {
 }
 
 resource "aws_ecs_cluster_capacity_providers" "main" {
+  count = var.use_localstack ? 0 : 1
   cluster_name = aws_ecs_cluster.main.name
 
   capacity_providers = ["FARGATE", "FARGATE_SPOT"]
@@ -83,9 +84,12 @@ resource "aws_ecs_service" "app" {
   desired_count   = 1
   
   # Fargate Spot Strategy
-  capacity_provider_strategy {
-    capacity_provider = "FARGATE_SPOT"
-    weight            = 100
+  dynamic "capacity_provider_strategy" {
+    for_each = var.use_localstack ? [] : [1]
+    content {
+      capacity_provider = "FARGATE_SPOT"
+      weight            = 100
+    }
   }
 
   network_configuration {
