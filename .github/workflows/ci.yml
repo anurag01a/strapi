@@ -32,7 +32,7 @@ jobs:
           FULL_IMAGE="${{ env.ECR_REPO }}:$IMAGE_TAG"
           
           echo "Building Docker Image: $FULL_IMAGE ..."
-          docker build -t "$FULL_IMAGE" .
+          docker build -t "$FULL_IMAGE" ./ECS_Fargate/app
           
           echo "Simulating Docker Push (Skipping actual network push to avoid external dependencies)..."
           echo "Docker Push Successful."
