@@ -2,7 +2,7 @@ name: Streamline CI/CD - LocalStack Blue/Green
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "working_anurag_2" ]
   workflow_dispatch:
 
 env:
